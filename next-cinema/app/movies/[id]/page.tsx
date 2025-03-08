@@ -27,6 +27,7 @@ export default async function MoviePage({ params }: { params: { id: string } }) 
             alt={movie.title}
             fill
             priority
+            sizes="(max-width: 768px) 100vw, 50vw"
             className="object-cover rounded-lg"
           />
         </div>

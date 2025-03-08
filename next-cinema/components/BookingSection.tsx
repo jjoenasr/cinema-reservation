@@ -9,24 +9,49 @@ interface BookingSectionProps {
   movieTitle: string;
 }
 
+interface Screening {
+  date: string;
+  times: string[];
+}
+
 export default function BookingSection({ movieId, movieTitle }: BookingSectionProps) {
   const [selectedSeats, setSelectedSeats] = useState<string[]>([]);
+  const [selectedDate, setSelectedDate] = useState<string>('');
   const [selectedTime, setSelectedTime] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
   const [bookedSeats, setBookedSeats] = useState<string[]>([]);
 
-  const screeningTimes = [
-    '10:00 AM',
-    '1:00 PM',
-    '4:00 PM',
-    '7:00 PM',
-    '10:00 PM'
-  ];
+  // Generate next 7 days
+  const screenings: Screening[] = Array.from({ length: 7 }, (_, i) => {
+    const date = new Date();
+    date.setDate(date.getDate() + i);
+    return {
+      date: date.toISOString().split('T')[0],
+      times: ['10:00 AM', '1:00 PM', '4:00 PM', '7:00 PM', '10:00 PM']
+    };
+  });
+
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-US', { 
+      weekday: 'short', 
+      month: 'short', 
+      day: 'numeric' 
+    });
+  };
+
+  const handleDateSelect = (date: string) => {
+    setSelectedDate(date);
+    setSelectedTime('');
+    setBookedSeats([]);
+  };
 
   const handleTimeSelect = async (time: string) => {
     setSelectedTime(time);
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/movies/${movieId}/seats?screening_time=${time}`);
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/movies/${movieId}/seats?screening_date=${selectedDate}&screening_time=${time}`
+      );
       const data = await response.json();
       setBookedSeats(data.booked_seats);
     } catch (error) {
@@ -36,8 +61,8 @@ export default function BookingSection({ movieId, movieTitle }: BookingSectionPr
   };
 
   const handleBooking = async () => {
-    if (!selectedTime || selectedSeats.length === 0) {
-      alert('Please select a time and seats');
+    if (!selectedDate || !selectedTime || selectedSeats.length === 0) {
+      alert('Please select a date, time and seats');
       return;
     }
 
@@ -51,6 +76,7 @@ export default function BookingSection({ movieId, movieTitle }: BookingSectionPr
         body: JSON.stringify({
           movie_id: movieId,
           seats: selectedSeats,
+          screening_date: selectedDate,
           screening_time: selectedTime,
           user_email: 'user@example.com', // In a real app, this would come from user authentication
         }),
@@ -63,6 +89,8 @@ export default function BookingSection({ movieId, movieTitle }: BookingSectionPr
       const data = await response.json();
       alert(`Booking confirmed! Booking ID: ${data.booking_id}`);
       setSelectedSeats([]);
+      setSelectedTime('');
+      setSelectedDate('');
     } catch (error) {
       console.error('Error booking seats:', error);
       alert('Failed to book seats. Please try again.');
@@ -76,25 +104,46 @@ export default function BookingSection({ movieId, movieTitle }: BookingSectionPr
       <h2 className="text-2xl font-bold mb-6 text-center">Book Tickets for {movieTitle}</h2>
       
       <div className="mb-8">
-        <h3 className="text-lg font-semibold text-center mb-4">Select Screening Time:</h3>
+        <h3 className="text-lg font-semibold text-center mb-4">Select Date:</h3>
         <div className="flex flex-wrap gap-4 justify-center">
-          {screeningTimes.map((time) => (
+          {screenings.map((screening) => (
             <button
-              key={time}
-              onClick={() => handleTimeSelect(time)}
+              key={screening.date}
+              onClick={() => handleDateSelect(screening.date)}
               className={`px-4 py-2 rounded-lg ${
-                selectedTime === time
+                selectedDate === screening.date
                   ? 'bg-blue-600 text-white'
                   : 'bg-gray-200 text-black hover:bg-gray-300'
               }`}
             >
-              {time}
+              {formatDate(screening.date)}
             </button>
           ))}
         </div>
       </div>
 
-      {selectedTime && (
+      {selectedDate && (
+        <div className="mb-8">
+          <h3 className="text-lg font-semibold text-center mb-4">Select Time:</h3>
+          <div className="flex flex-wrap gap-4 justify-center">
+            {screenings.find(s => s.date === selectedDate)?.times.map((time) => (
+              <button
+                key={time}
+                onClick={() => handleTimeSelect(time)}
+                className={`px-4 py-2 rounded-lg ${
+                  selectedTime === time
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-200 text-black hover:bg-gray-300'
+                }`}
+              >
+                {time}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {selectedDate && selectedTime && (
         <>
           <h3 className="text-lg font-semibold mb-4 text-center">Select Your Seats:</h3>
           <SeatSelection

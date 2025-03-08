@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, Column, Integer, String, ForeignKey, ARRAY
+from sqlalchemy import create_engine, Column, Integer, String, ForeignKey, ARRAY, Date
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
@@ -18,6 +18,7 @@ class Booking(Base):
     id = Column(Integer, primary_key=True, index=True)
     booking_id = Column(String, unique=True, index=True)
     movie_id = Column(Integer)
+    screening_date = Column(Date)
     screening_time = Column(String)
     user_email = Column(String)
     

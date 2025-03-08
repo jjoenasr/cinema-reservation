@@ -19,6 +19,7 @@ const MovieCard = ({ id, title, posterPath, releaseDate, voteAverage }: MovieCar
             src={`https://image.tmdb.org/t/p/w500${posterPath}`}
             alt={title}
             fill
+            sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
             className="object-cover"
           />
         </div>

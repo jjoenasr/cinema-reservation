@@ -2,7 +2,7 @@ from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 import os
 import requests
-from datetime import datetime
+from datetime import datetime, date
 from dotenv import load_dotenv
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -65,13 +65,15 @@ async def get_movie_details(movie_id: int):
 @app.get("/api/movies/{movie_id}/seats")
 async def get_booked_seats(
     movie_id: int, 
+    screening_date: date,
     screening_time: str,
     session: AsyncSession = Depends(get_session)
 ):
-    # Query bookings for the movie and screening time
+    # Query bookings for the movie, date and time
     query = select(Booking).where(
         Booking.movie_id == movie_id,
-        Booking.screening_time == screening_time
+        Booking.screening_time == screening_time,
+        Booking.screening_date == screening_date
     )
     result = await session.execute(query)
     bookings = result.scalars().all()
@@ -94,7 +96,8 @@ async def create_booking(
     # Check if seats are already booked
     existing_seats_query = select(Seat).join(Booking).where(
         Booking.movie_id == booking.movie_id,
-        Booking.screening_time == booking.screening_time
+        Booking.screening_time == booking.screening_time,
+        Booking.screening_date == booking.screening_date
     )
     result = await session.execute(existing_seats_query)
     existing_seats = result.scalars().all()
@@ -110,6 +113,7 @@ async def create_booking(
     new_booking = Booking(
         booking_id=booking_id,
         movie_id=booking.movie_id,
+        screening_date=booking.screening_date,
         screening_time=booking.screening_time,
         user_email=booking.user_email
     )
@@ -126,6 +130,7 @@ async def create_booking(
         booking_id=booking_id,
         movie_id=booking.movie_id,
         seats=booking.seats,
+        screening_date=booking.screening_date,
         screening_time=booking.screening_time,
         user_email=booking.user_email,
         status="confirmed"
