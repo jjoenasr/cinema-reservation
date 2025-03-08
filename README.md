@@ -86,6 +86,6 @@ A full-stack cinema reservation application built with Next.js, FastAPI, and TMD
 - Backend:
   - FastAPI
   - Python
-  - SQLAlchemy (ready for database integration)
+  - SQLAlchemy
 - External APIs:
   - TMDB API
