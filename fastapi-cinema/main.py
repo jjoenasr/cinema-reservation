@@ -8,7 +8,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from database import get_session, Booking, Seat, create_tables
 from contextlib import asynccontextmanager
-from models import SeatBooking, BookingResponse
+from schemas import SeatBooking, BookingResponse
+import uuid
 load_dotenv()
 
 # Startup event
@@ -25,7 +26,7 @@ app = FastAPI(lifespan=lifespan)
 # Enable CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -109,7 +110,7 @@ async def create_booking(
             raise HTTPException(status_code=400, detail=f"Seat {seat} is already booked")
 
     # Create new booking
-    booking_id = f"BK{datetime.now().strftime('%Y%m%d%H%M%S')}"
+    booking_id = f"BK{uuid.uuid4().hex[:8]}"
     new_booking = Booking(
         booking_id=booking_id,
         movie_id=booking.movie_id,
